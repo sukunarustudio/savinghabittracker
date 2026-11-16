@@ -327,11 +327,12 @@ fun CashFlowCard(
                 )
                 items(filters) { filter ->
                     val label = when (filter) {
-                        PeriodFilter.WEEKLY -> "Weekly"
-                        PeriodFilter.MONTHLY -> "Monthly"
-                        PeriodFilter.DAILY -> "Daily"
-                        PeriodFilter.YEARLY -> "Yearly"
-                        PeriodFilter.ALL -> "All"
+                        PeriodFilter.WEEKLY -> stringResource(R.string.period_weekly)
+                        PeriodFilter.MONTHLY -> stringResource(R.string.period_monthly)
+                        PeriodFilter.DAILY -> stringResource(R.string.period_daily)
+                        PeriodFilter.YEARLY -> stringResource(R.string.period_yearly)
+                        PeriodFilter.ALL -> stringResource(R.string.period_all)
+                        PeriodFilter.CUSTOM -> stringResource(R.string.period_custom)
                     }
                     FilterChip(
                         selected = state.periodFilter == filter,

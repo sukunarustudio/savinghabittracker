@@ -27,6 +27,12 @@
     <string name="dashboard_active_savings_goals">Target Tabungan Aktif</string>
     <string name="dashboard_no_active_goals">Belum ada target tabungan aktif. Mulai menabung untuk impianmu!</string>
     <string name="dashboard_view_all">Lihat Semua</string>
+    <string name="period_weekly">Mingguan</string>
+    <string name="period_monthly">Bulanan</string>
+    <string name="period_daily">Harian</string>
+    <string name="period_yearly">Tahunan</string>
+    <string name="period_all">Semua</string>
+    <string name="period_custom">Kustom</string>
 
     <!-- Settings -->
     <string name="settings_title">Pengaturan Aplikasi</string>

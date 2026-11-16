@@ -27,6 +27,12 @@
     <string name="dashboard_active_savings_goals">Active Savings Goals</string>
     <string name="dashboard_no_active_goals">No active savings goals. Start saving towards a goal!</string>
     <string name="dashboard_view_all">View All</string>
+    <string name="period_weekly">Weekly</string>
+    <string name="period_monthly">Monthly</string>
+    <string name="period_daily">Daily</string>
+    <string name="period_yearly">Yearly</string>
+    <string name="period_all">All</string>
+    <string name="period_custom">Custom</string>
 
     <!-- Settings -->
     <string name="settings_title">Settings</string>
