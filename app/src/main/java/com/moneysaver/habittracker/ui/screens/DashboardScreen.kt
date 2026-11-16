@@ -131,7 +131,7 @@ fun DashboardScreen(
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertiling
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
                     Text(
                         text = "Recent Transactions",

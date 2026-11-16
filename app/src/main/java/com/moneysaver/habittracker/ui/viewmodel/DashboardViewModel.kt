@@ -57,9 +57,11 @@ class DashboardViewModel(
         savingsGoalRepository.getGoals(),
         habitRepository.getHabits(),
         habitRepository.getAllCompletionLogs(),
-        selectedPeriodFilter,
-        userPreferencesRepository.userPreferencesFlow
-    ) { transactions, goals, habits, logs, periodFilter, userPrefs ->
+        combine(selectedPeriodFilter, userPreferencesRepository.userPreferencesFlow) { filter, prefs ->
+            filter to prefs
+        }
+    ) { transactions, goals, habits, logs, filterAndPrefs ->
+        val (periodFilter, userPrefs) = filterAndPrefs
         // 1. Calculate Lifetime Net Available Balance
         val availableBalance = ledgerEngine.calculateLifetimeAvailableBalance(transactions, goals)
 
