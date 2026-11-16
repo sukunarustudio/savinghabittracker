@@ -477,7 +477,8 @@ fun SavingsGoalCard(
 
                 val statusBadge = when {
                     goal.isAchieved -> "Achieved"
-                    goal.status == GoalStatus.PAUSED -> "Paused"
+                    goal.status == GoalStatus.CANCELLED -> "Cancelled"
+                    goal.status == GoalStatus.OVERDUE -> "Overdue"
                     else -> "In Progress"
                 }
                 SuggestionChip(

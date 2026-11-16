@@ -3,7 +3,6 @@ package com.moneysaver.habittracker.ui.viewmodel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.moneysaver.habittracker.domain.engine.habit.HabitStreakCalculator
-import com.moneysaver.habittracker.domain.model.habit.DayStatus
 import com.moneysaver.habittracker.domain.model.habit.FrequencyType
 import com.moneysaver.habittracker.domain.model.habit.Habit
 import com.moneysaver.habittracker.domain.model.habit.HabitCompletionLog
