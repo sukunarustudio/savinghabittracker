@@ -143,16 +143,17 @@ class HabitAlarmScheduler internal constructor(
      */
     fun calculateNextTriggerMillis(
         habit: Habit,
-        referenceDateTime: LocalDateTime = LocalDateTime.now(zoneId),
+        referenceDateTime: LocalDateTime? = null,
         zoneId: ZoneId = ZoneId.systemDefault()
     ): Long? {
+        val effectiveRefDateTime = referenceDateTime ?: LocalDateTime.now(zoneId)
         if (habit.isArchived) return null
-        if (habit.archivedAt != null && !habit.archivedAt.isAfter(referenceDateTime.toLocalDate())) {
+        if (habit.archivedAt != null && !habit.archivedAt.isAfter(effectiveRefDateTime.toLocalDate())) {
             return null
         }
 
-        val referenceDate = referenceDateTime.toLocalDate()
-        val referenceTime = referenceDateTime.toLocalTime()
+        val referenceDate = effectiveRefDateTime.toLocalDate()
+        val referenceTime = effectiveRefDateTime.toLocalTime()
 
         // 1. Check if the reminder is due today and still in the future
         if (habit.isDueOn(referenceDate)) {

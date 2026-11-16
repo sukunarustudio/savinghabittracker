@@ -1,10 +1,5 @@
 package com.moneysaver.habittracker.domain.model
 
-enum class CategoryType {
-    INCOME,
-    EXPENSE
-}
-
 data class Category(
     val id: Long = 0L,
     val name: String,

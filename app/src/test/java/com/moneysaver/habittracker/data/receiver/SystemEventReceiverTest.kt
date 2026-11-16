@@ -32,7 +32,7 @@ class SystemEventReceiverTest {
         val actions = SystemEventReceiver.SUPPORTED_ACTIONS
         assertTrue(actions.contains(Intent.ACTION_BOOT_COMPLETED))
         assertTrue(actions.contains(Intent.ACTION_MY_PACKAGE_REPLACED))
-        assertTrue(actions.contains(Intent.ACTION_TIME_SET))
+        assertTrue(actions.contains(Intent.ACTION_TIME_CHANGED))
         assertTrue(actions.contains(Intent.ACTION_TIMEZONE_CHANGED))
         assertEquals(4, actions.size)
     }
