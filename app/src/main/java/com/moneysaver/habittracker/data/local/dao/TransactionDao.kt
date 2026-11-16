@@ -28,6 +28,12 @@ interface TransactionDao {
     @Query("DELETE FROM transactions WHERE id = :id")
     suspend fun deleteById(id: Long)
 
+    @Query("DELETE FROM transactions WHERE savingsGoalId = :savingsGoalId")
+    suspend fun deleteBySavingsGoalId(savingsGoalId: Long)
+
+    @Query("SELECT * FROM transactions WHERE savingsGoalId = :savingsGoalId ORDER BY timestamp DESC")
+    suspend fun getTransactionsBySavingsGoalList(savingsGoalId: Long): List<TransactionEntity>
+
     @Query("SELECT * FROM transactions WHERE id = :id")
     suspend fun getTransactionById(id: Long): TransactionEntity?
 

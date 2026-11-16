@@ -28,10 +28,39 @@ data class UserPreferences(
     val periodFilter: PeriodFilter = PeriodFilter.MONTHLY
 )
 
-class UserPreferencesRepository(
+interface UserPreferencesRepository {
+    val userPreferencesFlow: Flow<UserPreferences>
+    val userPreferences: StateFlow<UserPreferences>
+    suspend fun setCurrencySymbol(symbol: String)
+    suspend fun updateCurrencySymbol(symbol: String)
+    suspend fun setThemeMode(mode: ThemeMode)
+    suspend fun updateThemeMode(mode: ThemeMode)
+    suspend fun setPeriodFilter(period: PeriodFilter)
+    suspend fun updatePeriodFilter(period: PeriodFilter)
+    suspend fun clear()
+
+    companion object {
+        val CURRENCY_SYMBOL = stringPreferencesKey("currency_symbol")
+        val THEME_MODE = stringPreferencesKey("theme_mode")
+        val PERIOD_FILTER = stringPreferencesKey("period_filter")
+
+        operator fun invoke(
+            context: Context,
+            scope: CoroutineScope = CoroutineScope(Dispatchers.IO + SupervisorJob())
+        ): UserPreferencesRepository = DataStoreUserPreferencesRepository(context, scope)
+
+        operator fun invoke(
+            dataStore: DataStore<Preferences>,
+            scope: CoroutineScope = CoroutineScope(Dispatchers.IO + SupervisorJob())
+        ): UserPreferencesRepository = DataStoreUserPreferencesRepository(dataStore, scope)
+    }
+}
+
+class DataStoreUserPreferencesRepository(
     private val dataStore: DataStore<Preferences>,
     scope: CoroutineScope = CoroutineScope(Dispatchers.IO + SupervisorJob())
-) {
+) : UserPreferencesRepository {
+
     constructor(
         context: Context,
         scope: CoroutineScope = CoroutineScope(Dispatchers.IO + SupervisorJob())
@@ -40,13 +69,7 @@ class UserPreferencesRepository(
         scope
     )
 
-    companion object {
-        val CURRENCY_SYMBOL = stringPreferencesKey("currency_symbol")
-        val THEME_MODE = stringPreferencesKey("theme_mode")
-        val PERIOD_FILTER = stringPreferencesKey("period_filter")
-    }
-
-    val userPreferencesFlow: Flow<UserPreferences> = dataStore.data
+    override val userPreferencesFlow: Flow<UserPreferences> = dataStore.data
         .catch { exception ->
             if (exception is IOException) {
                 emit(emptyPreferences())
@@ -55,11 +78,11 @@ class UserPreferencesRepository(
             }
         }
         .map { preferences ->
-            val currencySymbol = preferences[CURRENCY_SYMBOL] ?: "$"
-            val themeMode = preferences[THEME_MODE]?.let {
+            val currencySymbol = preferences[UserPreferencesRepository.CURRENCY_SYMBOL] ?: "$"
+            val themeMode = preferences[UserPreferencesRepository.THEME_MODE]?.let {
                 runCatching { ThemeMode.valueOf(it) }.getOrDefault(ThemeMode.SYSTEM)
             } ?: ThemeMode.SYSTEM
-            val periodFilter = preferences[PERIOD_FILTER]?.let {
+            val periodFilter = preferences[UserPreferencesRepository.PERIOD_FILTER]?.let {
                 runCatching { PeriodFilter.valueOf(it) }.getOrDefault(PeriodFilter.MONTHLY)
             } ?: PeriodFilter.MONTHLY
 
@@ -70,38 +93,38 @@ class UserPreferencesRepository(
             )
         }
 
-    val userPreferences: StateFlow<UserPreferences> = userPreferencesFlow
+    override val userPreferences: StateFlow<UserPreferences> = userPreferencesFlow
         .stateIn(
             scope = scope,
             started = SharingStarted.Eagerly,
             initialValue = UserPreferences()
         )
 
-    suspend fun setCurrencySymbol(symbol: String) {
+    override suspend fun setCurrencySymbol(symbol: String) {
         dataStore.edit { preferences ->
-            preferences[CURRENCY_SYMBOL] = symbol
+            preferences[UserPreferencesRepository.CURRENCY_SYMBOL] = symbol
         }
     }
 
-    suspend fun updateCurrencySymbol(symbol: String) = setCurrencySymbol(symbol)
+    override suspend fun updateCurrencySymbol(symbol: String) = setCurrencySymbol(symbol)
 
-    suspend fun setThemeMode(mode: ThemeMode) {
+    override suspend fun setThemeMode(mode: ThemeMode) {
         dataStore.edit { preferences ->
-            preferences[THEME_MODE] = mode.name
+            preferences[UserPreferencesRepository.THEME_MODE] = mode.name
         }
     }
 
-    suspend fun updateThemeMode(mode: ThemeMode) = setThemeMode(mode)
+    override suspend fun updateThemeMode(mode: ThemeMode) = setThemeMode(mode)
 
-    suspend fun setPeriodFilter(period: PeriodFilter) {
+    override suspend fun setPeriodFilter(period: PeriodFilter) {
         dataStore.edit { preferences ->
-            preferences[PERIOD_FILTER] = period.name
+            preferences[UserPreferencesRepository.PERIOD_FILTER] = period.name
         }
     }
 
-    suspend fun updatePeriodFilter(period: PeriodFilter) = setPeriodFilter(period)
+    override suspend fun updatePeriodFilter(period: PeriodFilter) = setPeriodFilter(period)
 
-    suspend fun clear() {
+    override suspend fun clear() {
         dataStore.edit { preferences ->
             preferences.clear()
         }
