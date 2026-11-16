@@ -16,11 +16,14 @@ import com.moneysaver.habittracker.domain.usecase.habit.DeleteHabitUseCase
 import com.moneysaver.habittracker.domain.usecase.habit.GetDailyHabitsUseCase
 import com.moneysaver.habittracker.domain.usecase.habit.ToggleHabitCompletionUseCase
 import com.moneysaver.habittracker.domain.usecase.habit.UpdateHabitScheduleUseCase
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import java.time.DayOfWeek
 import java.time.LocalDate
@@ -64,6 +67,26 @@ data class HabitUiState(
     val isLoading: Boolean = false
 )
 
+private data class HabitDataSnapshot(
+    val selectedDate: LocalDate,
+    val today: LocalDate,
+    val isFutureDate: Boolean,
+    val checklistItems: List<HabitChecklistItem>,
+    val completionRatio: Float,
+    val completedCount: Int,
+    val totalCount: Int,
+    val selectedHabitDetail: HabitDetailData?
+)
+
+private data class HabitDialogState(
+    val isAddHabitOpen: Boolean = false,
+    val isEditScheduleOpen: Boolean = false,
+    val habitToEdit: Habit? = null,
+    val habitForArchive: Habit? = null,
+    val habitForDelete: Habit? = null,
+    val error: String? = null
+)
+
 class HabitViewModel(
     private val habitRepository: HabitRepository,
     private val streakCalculator: HabitStreakCalculator = HabitStreakCalculator(),
@@ -81,14 +104,9 @@ class HabitViewModel(
 
     private val selectedDateState = MutableStateFlow(LocalDate.now())
     private val selectedHabitDetailIdState = MutableStateFlow<String?>(null)
-    private val isAddHabitOpenState = MutableStateFlow(false)
-    private val isEditScheduleOpenState = MutableStateFlow(false)
-    private val habitToEditState = MutableStateFlow<Habit?>(null)
-    private val showArchiveConfirmState = MutableStateFlow<Habit?>(null)
-    private val showDeleteConfirmState = MutableStateFlow<Habit?>(null)
-    private val errorState = MutableStateFlow<String?>(null)
+    private val dialogState = MutableStateFlow(HabitDialogState())
 
-    val uiState: StateFlow<HabitUiState> = combine(
+    private val habitDataFlow = combine(
         habitRepository.getHabits(),
         habitRepository.getAllCompletionLogs(),
         selectedDateState,
@@ -146,7 +164,7 @@ class HabitViewModel(
             } else null
         } else null
 
-        HabitUiState(
+        HabitDataSnapshot(
             selectedDate = selectedDate,
             today = today,
             isFutureDate = isFuture,
@@ -154,14 +172,30 @@ class HabitViewModel(
             completionRatio = ratio,
             completedCount = completedCount,
             totalCount = totalCount,
-            selectedHabitDetail = detailData,
-            isAddHabitOpen = isAddHabitOpenState.value,
-            isEditScheduleOpen = isEditScheduleOpenState.value,
-            habitToEdit = habitToEditState.value,
-            showArchiveConfirm = showArchiveConfirmState.value != null,
-            showDeleteConfirm = showDeleteConfirmState.value != null,
-            habitTargetForAction = showArchiveConfirmState.value ?: showDeleteConfirmState.value,
-            error = errorState.value,
+            selectedHabitDetail = detailData
+        )
+    }.flowOn(Dispatchers.Default)
+
+    val uiState: StateFlow<HabitUiState> = combine(
+        habitDataFlow,
+        dialogState
+    ) { data, dialog ->
+        HabitUiState(
+            selectedDate = data.selectedDate,
+            today = data.today,
+            isFutureDate = data.isFutureDate,
+            checklistItems = data.checklistItems,
+            completionRatio = data.completionRatio,
+            completedCount = data.completedCount,
+            totalCount = data.totalCount,
+            selectedHabitDetail = data.selectedHabitDetail,
+            isAddHabitOpen = dialog.isAddHabitOpen,
+            isEditScheduleOpen = dialog.isEditScheduleOpen,
+            habitToEdit = dialog.habitToEdit,
+            showArchiveConfirm = dialog.habitForArchive != null,
+            showDeleteConfirm = dialog.habitForDelete != null,
+            habitTargetForAction = dialog.habitForArchive ?: dialog.habitForDelete,
+            error = dialog.error,
             isLoading = false
         )
     }.stateIn(
@@ -172,7 +206,7 @@ class HabitViewModel(
 
     fun selectDate(date: LocalDate) {
         selectedDateState.value = date
-        errorState.value = null
+        dialogState.update { it.copy(error = null) }
     }
 
     fun goToPreviousDay() {
@@ -193,7 +227,7 @@ class HabitViewModel(
 
         // Future-date read-only guard:
         if (selectedDate.isAfter(today)) {
-            errorState.value = "Future dates are read-only: habit completions cannot be recorded in advance."
+            dialogState.update { it.copy(error = "Future dates are read-only: habit completions cannot be recorded in advance.") }
             return
         }
 
@@ -201,7 +235,7 @@ class HabitViewModel(
             try {
                 toggleHabitCompletionUseCase(habitId, selectedDate, today)
             } catch (e: Exception) {
-                errorState.value = e.message ?: "Failed to update habit completion"
+                dialogState.update { it.copy(error = e.message ?: "Failed to update habit completion") }
             }
         }
     }
@@ -215,13 +249,11 @@ class HabitViewModel(
     }
 
     fun openAddHabit() {
-        isAddHabitOpenState.value = true
-        errorState.value = null
+        dialogState.update { it.copy(isAddHabitOpen = true, error = null) }
     }
 
     fun closeAddHabit() {
-        isAddHabitOpenState.value = false
-        errorState.value = null
+        dialogState.update { it.copy(isAddHabitOpen = false, error = null) }
     }
 
     fun createHabit(
@@ -232,11 +264,11 @@ class HabitViewModel(
         reminderTime: LocalTime? = null
     ) {
         if (name.isBlank()) {
-            errorState.value = "Habit name cannot be blank"
+            dialogState.update { it.copy(error = "Habit name cannot be blank") }
             return
         }
         if (frequencyType == FrequencyType.CUSTOM_DAYS && targetDays.isEmpty()) {
-            errorState.value = "Please select at least one day for custom frequency"
+            dialogState.update { it.copy(error = "Please select at least one day for custom frequency") }
             return
         }
 
@@ -256,21 +288,17 @@ class HabitViewModel(
                 )
                 closeAddHabit()
             } catch (e: Exception) {
-                errorState.value = e.message ?: "Failed to create habit"
+                dialogState.update { it.copy(error = e.message ?: "Failed to create habit") }
             }
         }
     }
 
     fun openEditSchedule(habit: Habit) {
-        habitToEditState.value = habit
-        isEditScheduleOpenState.value = true
-        errorState.value = null
+        dialogState.update { it.copy(isEditScheduleOpen = true, habitToEdit = habit, error = null) }
     }
 
     fun closeEditSchedule() {
-        isEditScheduleOpenState.value = false
-        habitToEditState.value = null
-        errorState.value = null
+        dialogState.update { it.copy(isEditScheduleOpen = false, habitToEdit = null, error = null) }
     }
 
     fun updateSchedule(
@@ -278,9 +306,9 @@ class HabitViewModel(
         targetDays: Set<DayOfWeek>,
         reminderTime: LocalTime?
     ) {
-        val habit = habitToEditState.value ?: return
+        val habit = dialogState.value.habitToEdit ?: return
         if (frequencyType == FrequencyType.CUSTOM_DAYS && targetDays.isEmpty()) {
-            errorState.value = "Please select at least one day for custom frequency"
+            dialogState.update { it.copy(error = "Please select at least one day for custom frequency") }
             return
         }
 
@@ -299,58 +327,58 @@ class HabitViewModel(
                 )
                 closeEditSchedule()
             } catch (e: Exception) {
-                errorState.value = e.message ?: "Failed to update schedule"
+                dialogState.update { it.copy(error = e.message ?: "Failed to update schedule") }
             }
         }
     }
 
     fun promptArchiveHabit(habit: Habit) {
-        showArchiveConfirmState.value = habit
+        dialogState.update { it.copy(habitForArchive = habit) }
     }
 
     fun cancelArchiveHabit() {
-        showArchiveConfirmState.value = null
+        dialogState.update { it.copy(habitForArchive = null) }
     }
 
     fun confirmArchiveHabit() {
-        val habit = showArchiveConfirmState.value ?: return
+        val habit = dialogState.value.habitForArchive ?: return
         viewModelScope.launch {
             try {
                 archiveHabitUseCase(habit.id, LocalDate.now())
-                showArchiveConfirmState.value = null
+                dialogState.update { it.copy(habitForArchive = null) }
                 if (selectedHabitDetailIdState.value == habit.id) {
                     closeHabitDetail()
                 }
             } catch (e: Exception) {
-                errorState.value = e.message ?: "Failed to archive habit"
+                dialogState.update { it.copy(error = e.message ?: "Failed to archive habit") }
             }
         }
     }
 
     fun promptDeleteHabit(habit: Habit) {
-        showDeleteConfirmState.value = habit
+        dialogState.update { it.copy(habitForDelete = habit) }
     }
 
     fun cancelDeleteHabit() {
-        showDeleteConfirmState.value = null
+        dialogState.update { it.copy(habitForDelete = null) }
     }
 
     fun confirmDeleteHabit() {
-        val habit = showDeleteConfirmState.value ?: return
+        val habit = dialogState.value.habitForDelete ?: return
         viewModelScope.launch {
             try {
                 deleteHabitUseCase(habit.id)
-                showDeleteConfirmState.value = null
+                dialogState.update { it.copy(habitForDelete = null) }
                 if (selectedHabitDetailIdState.value == habit.id) {
                     closeHabitDetail()
                 }
             } catch (e: Exception) {
-                errorState.value = e.message ?: "Failed to delete habit"
+                dialogState.update { it.copy(error = e.message ?: "Failed to delete habit") }
             }
         }
     }
 
     fun clearError() {
-        errorState.value = null
+        dialogState.update { it.copy(error = null) }
     }
 }

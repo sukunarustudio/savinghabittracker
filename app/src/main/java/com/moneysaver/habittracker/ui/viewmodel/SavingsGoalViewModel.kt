@@ -17,11 +17,14 @@ import com.moneysaver.habittracker.domain.usecase.savings.CreateSavingsGoalUseCa
 import com.moneysaver.habittracker.domain.usecase.savings.DeleteSavingsGoalUseCase
 import com.moneysaver.habittracker.domain.usecase.savings.GoalDeletionStrategy
 import com.moneysaver.habittracker.domain.usecase.savings.WithdrawSavingsGoalUseCase
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
 enum class GoalDeletionChoice {
@@ -34,7 +37,7 @@ data class SavingsGoalUiState(
     val expenseCategories: List<Category> = emptyList(),
     val availableBalance: Long = 0L,
     val totalActiveAllocated: Long = 0L,
-    val currencySymbol: String = "$",
+    val currencySymbol: String = "Rp",
     val isAddEditOpen: Boolean = false,
     val editingGoal: SavingsGoal? = null,
     val isAllocateOpen: Boolean = false,
@@ -47,6 +50,28 @@ data class SavingsGoalUiState(
     val selectedRealizeCategoryId: Long? = null,
     val error: String? = null,
     val isLoading: Boolean = false
+)
+
+private data class SavingsGoalBaseData(
+    val goals: List<SavingsGoal>,
+    val expenseCategories: List<Category>,
+    val availableBalance: Long,
+    val totalActiveAllocated: Long,
+    val currencySymbol: String
+)
+
+private data class SavingsGoalDialogState(
+    val isAddEditOpen: Boolean = false,
+    val editingGoal: SavingsGoal? = null,
+    val isAllocateOpen: Boolean = false,
+    val goalForAllocation: SavingsGoal? = null,
+    val isWithdrawOpen: Boolean = false,
+    val goalForWithdraw: SavingsGoal? = null,
+    val isDeleteDialogOpen: Boolean = false,
+    val goalToDelete: SavingsGoal? = null,
+    val deletionChoice: GoalDeletionChoice = GoalDeletionChoice.REFUND_TO_BALANCE,
+    val selectedRealizeCategoryId: Long? = null,
+    val error: String? = null
 )
 
 class SavingsGoalViewModel(
@@ -71,19 +96,9 @@ class SavingsGoalViewModel(
     )
 ) : ViewModel() {
 
-    private val isAddEditOpenState = MutableStateFlow(false)
-    private val editingGoalState = MutableStateFlow<SavingsGoal?>(null)
-    private val isAllocateOpenState = MutableStateFlow(false)
-    private val goalForAllocationState = MutableStateFlow<SavingsGoal?>(null)
-    private val isWithdrawOpenState = MutableStateFlow(false)
-    private val goalForWithdrawState = MutableStateFlow<SavingsGoal?>(null)
-    private val isDeleteDialogOpenState = MutableStateFlow(false)
-    private val goalToDeleteState = MutableStateFlow<SavingsGoal?>(null)
-    private val deletionChoiceState = MutableStateFlow(GoalDeletionChoice.REFUND_TO_BALANCE)
-    private val selectedRealizeCategoryIdState = MutableStateFlow<Long?>(null)
-    private val errorState = MutableStateFlow<String?>(null)
+    private val dialogState = MutableStateFlow(SavingsGoalDialogState())
 
-    val uiState: StateFlow<SavingsGoalUiState> = combine(
+    private val goalsDataFlow = combine(
         savingsGoalRepository.getGoals(),
         transactionRepository.getTransactions(),
         categoryRepository.getCategories(),
@@ -93,23 +108,36 @@ class SavingsGoalViewModel(
         val activeAllocated = goals.filter { it.status.isActive }.sumOf { it.savedAmount }
         val expenseCats = categories.filter { it.type == CategoryType.EXPENSE }
 
-        SavingsGoalUiState(
+        SavingsGoalBaseData(
             goals = goals,
             expenseCategories = expenseCats,
             availableBalance = available,
             totalActiveAllocated = activeAllocated,
-            currencySymbol = userPrefs.currencySymbol,
-            isAddEditOpen = isAddEditOpenState.value,
-            editingGoal = editingGoalState.value,
-            isAllocateOpen = isAllocateOpenState.value,
-            goalForAllocation = goalForAllocationState.value,
-            isWithdrawOpen = isWithdrawOpenState.value,
-            goalForWithdraw = goalForWithdrawState.value,
-            isDeleteDialogOpen = isDeleteDialogOpenState.value,
-            goalToDelete = goalToDeleteState.value,
-            deletionChoice = deletionChoiceState.value,
-            selectedRealizeCategoryId = selectedRealizeCategoryIdState.value ?: expenseCats.firstOrNull()?.id,
-            error = errorState.value,
+            currencySymbol = userPrefs.currencySymbol
+        )
+    }.flowOn(Dispatchers.Default)
+
+    val uiState: StateFlow<SavingsGoalUiState> = combine(
+        goalsDataFlow,
+        dialogState
+    ) { data, dialog ->
+        SavingsGoalUiState(
+            goals = data.goals,
+            expenseCategories = data.expenseCategories,
+            availableBalance = data.availableBalance,
+            totalActiveAllocated = data.totalActiveAllocated,
+            currencySymbol = data.currencySymbol,
+            isAddEditOpen = dialog.isAddEditOpen,
+            editingGoal = dialog.editingGoal,
+            isAllocateOpen = dialog.isAllocateOpen,
+            goalForAllocation = dialog.goalForAllocation,
+            isWithdrawOpen = dialog.isWithdrawOpen,
+            goalForWithdraw = dialog.goalForWithdraw,
+            isDeleteDialogOpen = dialog.isDeleteDialogOpen,
+            goalToDelete = dialog.goalToDelete,
+            deletionChoice = dialog.deletionChoice,
+            selectedRealizeCategoryId = dialog.selectedRealizeCategoryId ?: data.expenseCategories.firstOrNull()?.id,
+            error = dialog.error,
             isLoading = false
         )
     }.stateIn(
@@ -119,36 +147,30 @@ class SavingsGoalViewModel(
     )
 
     fun openAddGoal() {
-        editingGoalState.value = null
-        isAddEditOpenState.value = true
-        errorState.value = null
+        dialogState.update { it.copy(isAddEditOpen = true, editingGoal = null, error = null) }
     }
 
     fun openEditGoal(goal: SavingsGoal) {
-        editingGoalState.value = goal
-        isAddEditOpenState.value = true
-        errorState.value = null
+        dialogState.update { it.copy(isAddEditOpen = true, editingGoal = goal, error = null) }
     }
 
     fun closeAddEditDialog() {
-        isAddEditOpenState.value = false
-        editingGoalState.value = null
-        errorState.value = null
+        dialogState.update { it.copy(isAddEditOpen = false, editingGoal = null, error = null) }
     }
 
     fun saveGoal(title: String, targetAmount: Long, targetDate: Long?) {
         if (title.isBlank()) {
-            errorState.value = "Goal title cannot be empty"
+            dialogState.update { it.copy(error = "Goal title cannot be empty") }
             return
         }
         if (targetAmount <= 0L) {
-            errorState.value = "Target amount must be greater than zero"
+            dialogState.update { it.copy(error = "Target amount must be greater than zero") }
             return
         }
 
         viewModelScope.launch {
             try {
-                val editing = editingGoalState.value
+                val editing = dialogState.value.editingGoal
                 if (editing != null) {
                     val status = if (editing.savedAmount >= targetAmount) GoalStatus.ACHIEVED else editing.status
                     val updated = editing.copy(
@@ -170,31 +192,27 @@ class SavingsGoalViewModel(
                 }
                 closeAddEditDialog()
             } catch (e: Exception) {
-                errorState.value = e.message ?: "Failed to save savings goal"
+                dialogState.update { it.copy(error = e.message ?: "Failed to save savings goal") }
             }
         }
     }
 
     fun openAllocateDialog(goal: SavingsGoal) {
-        goalForAllocationState.value = goal
-        isAllocateOpenState.value = true
-        errorState.value = null
+        dialogState.update { it.copy(isAllocateOpen = true, goalForAllocation = goal, error = null) }
     }
 
     fun closeAllocateDialog() {
-        isAllocateOpenState.value = false
-        goalForAllocationState.value = null
-        errorState.value = null
+        dialogState.update { it.copy(isAllocateOpen = false, goalForAllocation = null, error = null) }
     }
 
     fun allocate(amount: Long, note: String = "") {
-        val goal = goalForAllocationState.value ?: return
+        val goal = dialogState.value.goalForAllocation ?: return
         if (amount <= 0L) {
-            errorState.value = "Allocation amount must be greater than zero"
+            dialogState.update { it.copy(error = "Allocation amount must be greater than zero") }
             return
         }
         if (amount > uiState.value.availableBalance) {
-            errorState.value = "Cannot allocate more than available balance"
+            dialogState.update { it.copy(error = "Cannot allocate more than available balance") }
             return
         }
 
@@ -203,33 +221,29 @@ class SavingsGoalViewModel(
                 allocateSavingsGoalUseCase(goal.id, amount, note = note)
                 closeAllocateDialog()
             } catch (e: InsufficientBalanceException) {
-                errorState.value = e.message ?: "Insufficient balance to allocate funds"
+                dialogState.update { it.copy(error = e.message ?: "Insufficient balance to allocate funds") }
             } catch (e: Exception) {
-                errorState.value = e.message ?: "Failed to allocate funds"
+                dialogState.update { it.copy(error = e.message ?: "Failed to allocate funds") }
             }
         }
     }
 
     fun openWithdrawDialog(goal: SavingsGoal) {
-        goalForWithdrawState.value = goal
-        isWithdrawOpenState.value = true
-        errorState.value = null
+        dialogState.update { it.copy(isWithdrawOpen = true, goalForWithdraw = goal, error = null) }
     }
 
     fun closeWithdrawDialog() {
-        isWithdrawOpenState.value = false
-        goalForWithdrawState.value = null
-        errorState.value = null
+        dialogState.update { it.copy(isWithdrawOpen = false, goalForWithdraw = null, error = null) }
     }
 
     fun withdraw(amount: Long, note: String = "") {
-        val goal = goalForWithdrawState.value ?: return
+        val goal = dialogState.value.goalForWithdraw ?: return
         if (amount <= 0L) {
-            errorState.value = "Withdrawal amount must be greater than zero"
+            dialogState.update { it.copy(error = "Withdrawal amount must be greater than zero") }
             return
         }
         if (amount > goal.savedAmount) {
-            errorState.value = "Cannot withdraw more than saved amount"
+            dialogState.update { it.copy(error = "Cannot withdraw more than saved amount") }
             return
         }
 
@@ -238,43 +252,51 @@ class SavingsGoalViewModel(
                 withdrawSavingsGoalUseCase(goal.id, amount, note = note)
                 closeWithdrawDialog()
             } catch (e: Exception) {
-                errorState.value = e.message ?: "Failed to withdraw funds"
+                dialogState.update { it.copy(error = e.message ?: "Failed to withdraw funds") }
             }
         }
     }
 
     fun openDeleteDialog(goal: SavingsGoal) {
-        goalToDeleteState.value = goal
-        deletionChoiceState.value = GoalDeletionChoice.REFUND_TO_BALANCE
-        selectedRealizeCategoryIdState.value = uiState.value.expenseCategories.firstOrNull()?.id
-        isDeleteDialogOpenState.value = true
-        errorState.value = null
+        dialogState.update {
+            it.copy(
+                isDeleteDialogOpen = true,
+                goalToDelete = goal,
+                deletionChoice = GoalDeletionChoice.REFUND_TO_BALANCE,
+                selectedRealizeCategoryId = uiState.value.expenseCategories.firstOrNull()?.id,
+                error = null
+            )
+        }
     }
 
     fun closeDeleteDialog() {
-        isDeleteDialogOpenState.value = false
-        goalToDeleteState.value = null
-        errorState.value = null
+        dialogState.update {
+            it.copy(
+                isDeleteDialogOpen = false,
+                goalToDelete = null,
+                error = null
+            )
+        }
     }
 
     fun setDeletionChoice(choice: GoalDeletionChoice) {
-        deletionChoiceState.value = choice
+        dialogState.update { it.copy(deletionChoice = choice) }
     }
 
     fun setSelectedRealizeCategory(categoryId: Long) {
-        selectedRealizeCategoryIdState.value = categoryId
+        dialogState.update { it.copy(selectedRealizeCategoryId = categoryId) }
     }
 
     fun confirmDeleteGoal(realizeNote: String = "") {
-        val goal = goalToDeleteState.value ?: return
-        val choice = deletionChoiceState.value
+        val goal = dialogState.value.goalToDelete ?: return
+        val choice = dialogState.value.deletionChoice
 
         viewModelScope.launch {
             try {
                 val strategy = when (choice) {
                     GoalDeletionChoice.REFUND_TO_BALANCE -> GoalDeletionStrategy.RefundToBalance()
                     GoalDeletionChoice.REALIZE_AS_EXPENSE -> {
-                        val catId = selectedRealizeCategoryIdState.value
+                        val catId = dialogState.value.selectedRealizeCategoryId
                             ?: uiState.value.expenseCategories.firstOrNull()?.id
                             ?: throw IllegalStateException("An expense category must be selected to realize goal funds as an expense")
                         GoalDeletionStrategy.RealizeAsExpense(
@@ -286,12 +308,12 @@ class SavingsGoalViewModel(
                 deleteSavingsGoalUseCase(goal.id, strategy)
                 closeDeleteDialog()
             } catch (e: Exception) {
-                errorState.value = e.message ?: "Failed to delete savings goal"
+                dialogState.update { it.copy(error = e.message ?: "Failed to delete savings goal") }
             }
         }
     }
 
     fun clearError() {
-        errorState.value = null
+        dialogState.update { it.copy(error = null) }
     }
 }

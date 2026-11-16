@@ -36,6 +36,12 @@ class FakeUserPreferencesRepository(
 
     override suspend fun updatePeriodFilter(period: PeriodFilter) = setPeriodFilter(period)
 
+    override suspend fun setLanguage(language: String) {
+        _prefs.value = _prefs.value.copy(language = language)
+    }
+
+    override suspend fun updateLanguage(language: String) = setLanguage(language)
+
     override suspend fun clear() {
         _prefs.value = UserPreferences()
     }

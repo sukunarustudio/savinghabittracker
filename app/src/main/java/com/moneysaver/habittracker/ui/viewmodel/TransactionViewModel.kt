@@ -18,11 +18,14 @@ import com.moneysaver.habittracker.domain.usecase.transaction.CreateTransactionU
 import com.moneysaver.habittracker.domain.usecase.transaction.DeleteTransactionUseCase
 import com.moneysaver.habittracker.domain.usecase.transaction.UpdateTransactionUseCase
 import com.moneysaver.habittracker.ui.util.CurrencyFormatter
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
 data class TransactionUiState(
@@ -30,7 +33,7 @@ data class TransactionUiState(
     val categories: List<Category> = emptyList(),
     val availableBalance: Long = 0L,
     val filterType: TransactionType? = null,
-    val currencySymbol: String = "$",
+    val currencySymbol: String = "Rp",
     val isAddEditOpen: Boolean = false,
     val editingTransaction: Transaction? = null,
     val isCategoryManagementOpen: Boolean = false,
@@ -43,6 +46,24 @@ data class TransactionUiState(
     val categoryLinkedCount: Int = 0,
     val error: String? = null,
     val isLoading: Boolean = false
+)
+
+private data class TransactionBaseData(
+    val transactions: List<Transaction>,
+    val categories: List<Category>,
+    val availableBalance: Long,
+    val filterType: TransactionType?,
+    val currencySymbol: String
+)
+
+private data class TransactionDialogState(
+    val isAddEditOpen: Boolean = false,
+    val editingTransaction: Transaction? = null,
+    val isCategoryManagementOpen: Boolean = false,
+    val transactionToDelete: Transaction? = null,
+    val overdraftWarningMessage: String? = null,
+    val categoryToDelete: Pair<Category, Int>? = null,
+    val error: String? = null
 )
 
 class TransactionViewModel(
@@ -73,15 +94,9 @@ class TransactionViewModel(
 ) : ViewModel() {
 
     private val filterTypeState = MutableStateFlow<TransactionType?>(null)
-    private val isAddEditOpenState = MutableStateFlow(false)
-    private val editingTxState = MutableStateFlow<Transaction?>(null)
-    private val isCategoryManagementOpenState = MutableStateFlow(false)
-    private val deleteConfirmState = MutableStateFlow<Transaction?>(null)
-    private val overdraftWarningState = MutableStateFlow<String?>(null)
-    private val categoryToDeleteState = MutableStateFlow<Pair<Category, Int>?>(null)
-    private val errorState = MutableStateFlow<String?>(null)
+    private val dialogState = MutableStateFlow(TransactionDialogState())
 
-    val uiState: StateFlow<TransactionUiState> = combine(
+    private val transactionDataFlow = combine(
         transactionRepository.getTransactions(),
         categoryRepository.getCategories(),
         savingsGoalRepository.getGoals(),
@@ -95,23 +110,36 @@ class TransactionViewModel(
             transactions
         }.sortedByDescending { it.timestamp }
 
-        TransactionUiState(
+        TransactionBaseData(
             transactions = filteredTx,
             categories = categories,
             availableBalance = available,
             filterType = filter,
-            currencySymbol = prefs.currencySymbol,
-            isAddEditOpen = isAddEditOpenState.value,
-            editingTransaction = editingTxState.value,
-            isCategoryManagementOpen = isCategoryManagementOpenState.value,
-            showDeleteConfirm = deleteConfirmState.value != null,
-            transactionToDelete = deleteConfirmState.value,
-            showOverdraftWarning = overdraftWarningState.value != null,
-            overdraftWarningMessage = overdraftWarningState.value ?: "",
-            showCategoryDeleteDialog = categoryToDeleteState.value != null,
-            categoryToDelete = categoryToDeleteState.value?.first,
-            categoryLinkedCount = categoryToDeleteState.value?.second ?: 0,
-            error = errorState.value,
+            currencySymbol = prefs.currencySymbol
+        )
+    }.flowOn(Dispatchers.Default)
+
+    val uiState: StateFlow<TransactionUiState> = combine(
+        transactionDataFlow,
+        dialogState
+    ) { data, dialog ->
+        TransactionUiState(
+            transactions = data.transactions,
+            categories = data.categories,
+            availableBalance = data.availableBalance,
+            filterType = data.filterType,
+            currencySymbol = data.currencySymbol,
+            isAddEditOpen = dialog.isAddEditOpen,
+            editingTransaction = dialog.editingTransaction,
+            isCategoryManagementOpen = dialog.isCategoryManagementOpen,
+            showDeleteConfirm = dialog.transactionToDelete != null,
+            transactionToDelete = dialog.transactionToDelete,
+            showOverdraftWarning = dialog.overdraftWarningMessage != null,
+            overdraftWarningMessage = dialog.overdraftWarningMessage ?: "",
+            showCategoryDeleteDialog = dialog.categoryToDelete != null,
+            categoryToDelete = dialog.categoryToDelete?.first,
+            categoryLinkedCount = dialog.categoryToDelete?.second ?: 0,
+            error = dialog.error,
             isLoading = false
         )
     }.stateIn(
@@ -125,21 +153,15 @@ class TransactionViewModel(
     }
 
     fun openAddTransaction() {
-        editingTxState.value = null
-        isAddEditOpenState.value = true
-        errorState.value = null
+        dialogState.update { it.copy(isAddEditOpen = true, editingTransaction = null, error = null) }
     }
 
     fun openEditTransaction(transaction: Transaction) {
-        editingTxState.value = transaction
-        isAddEditOpenState.value = true
-        errorState.value = null
+        dialogState.update { it.copy(isAddEditOpen = true, editingTransaction = transaction, error = null) }
     }
 
     fun closeAddEditDialog() {
-        isAddEditOpenState.value = false
-        editingTxState.value = null
-        errorState.value = null
+        dialogState.update { it.copy(isAddEditOpen = false, editingTransaction = null, error = null) }
     }
 
     fun saveTransaction(
@@ -150,12 +172,12 @@ class TransactionViewModel(
         timestamp: Long = System.currentTimeMillis()
     ) {
         if (amount <= 0L) {
-            errorState.value = "Amount must be greater than zero"
+            dialogState.update { it.copy(error = "Amount must be greater than zero") }
             return
         }
 
         val currentAvailable = uiState.value.availableBalance
-        val editing = editingTxState.value
+        val editing = dialogState.value.editingTransaction
 
         // Check overdraft condition for expenses
         if (type == TransactionType.EXPENSE) {
@@ -168,9 +190,13 @@ class TransactionViewModel(
             if (netDelta > currentAvailable) {
                 val symbol = uiState.value.currencySymbol
                 val excess = netDelta - currentAvailable
-                overdraftWarningState.value = "Warning: This expense of ${CurrencyFormatter.formatCents(amount, symbol)} " +
-                        "exceeds your available balance of ${CurrencyFormatter.formatCents(currentAvailable, symbol)} " +
-                        "by ${CurrencyFormatter.formatCents(excess, symbol)}. Non-negative balance invariant strictly forbids this transaction."
+                dialogState.update {
+                    it.copy(
+                        overdraftWarningMessage = "Warning: This expense of ${CurrencyFormatter.formatCents(amount, symbol)} " +
+                                "exceeds your available balance of ${CurrencyFormatter.formatCents(currentAvailable, symbol)} " +
+                                "by ${CurrencyFormatter.formatCents(excess, symbol)}. Non-negative balance invariant strictly forbids this transaction."
+                    )
+                }
                 return
             }
         }
@@ -198,48 +224,50 @@ class TransactionViewModel(
                 }
                 closeAddEditDialog()
             } catch (e: InsufficientBalanceException) {
-                overdraftWarningState.value = e.message ?: "Transaction causes overdraft and cannot be completed."
+                dialogState.update {
+                    it.copy(overdraftWarningMessage = e.message ?: "Transaction causes overdraft and cannot be completed.")
+                }
             } catch (e: Exception) {
-                errorState.value = e.message ?: "Failed to save transaction"
+                dialogState.update { it.copy(error = e.message ?: "Failed to save transaction") }
             }
         }
     }
 
     fun promptDeleteTransaction(transaction: Transaction) {
-        deleteConfirmState.value = transaction
+        dialogState.update { it.copy(transactionToDelete = transaction) }
     }
 
     fun cancelDeleteTransaction() {
-        deleteConfirmState.value = null
+        dialogState.update { it.copy(transactionToDelete = null) }
     }
 
     fun confirmDeleteTransaction() {
-        val tx = deleteConfirmState.value ?: return
+        val tx = dialogState.value.transactionToDelete ?: return
         viewModelScope.launch {
             try {
                 deleteTransactionUseCase(tx.id)
-                deleteConfirmState.value = null
+                dialogState.update { it.copy(transactionToDelete = null) }
             } catch (e: Exception) {
-                errorState.value = e.message ?: "Failed to delete transaction"
+                dialogState.update { it.copy(error = e.message ?: "Failed to delete transaction") }
             }
         }
     }
 
     fun dismissOverdraftWarning() {
-        overdraftWarningState.value = null
+        dialogState.update { it.copy(overdraftWarningMessage = null) }
     }
 
     fun openCategoryManagement() {
-        isCategoryManagementOpenState.value = true
+        dialogState.update { it.copy(isCategoryManagementOpen = true) }
     }
 
     fun closeCategoryManagement() {
-        isCategoryManagementOpenState.value = false
+        dialogState.update { it.copy(isCategoryManagementOpen = false) }
     }
 
     fun createCategory(name: String, type: CategoryType, colorHex: String, iconRes: Int = 0) {
         if (name.isBlank()) {
-            errorState.value = "Category name cannot be empty"
+            dialogState.update { it.copy(error = "Category name cannot be empty") }
             return
         }
         viewModelScope.launch {
@@ -253,7 +281,7 @@ class TransactionViewModel(
                 )
                 createCategoryUseCase(cat)
             } catch (e: Exception) {
-                errorState.value = e.message ?: "Failed to create category"
+                dialogState.update { it.copy(error = e.message ?: "Failed to create category") }
             }
         }
     }
@@ -261,35 +289,35 @@ class TransactionViewModel(
     fun promptDeleteCategory(category: Category) {
         viewModelScope.launch {
             val count = categoryRepository.countTransactionsForCategory(category.id)
-            categoryToDeleteState.value = category to count
+            dialogState.update { it.copy(categoryToDelete = category to count) }
         }
     }
 
     fun cancelDeleteCategory() {
-        categoryToDeleteState.value = null
+        dialogState.update { it.copy(categoryToDelete = null) }
     }
 
     fun confirmDeleteCategory(targetCategoryId: Long?) {
-        val (category, count) = categoryToDeleteState.value ?: return
+        val (category, count) = dialogState.value.categoryToDelete ?: return
         viewModelScope.launch {
             try {
                 if (count > 0) {
                     if (targetCategoryId == null || targetCategoryId == category.id) {
-                        errorState.value = "Please select a different category to reassign linked transactions"
+                        dialogState.update { it.copy(error = "Please select a different category to reassign linked transactions") }
                         return@launch
                     }
                     deleteCategoryWithReassignmentUseCase(category.id, targetCategoryId)
                 } else {
                     categoryRepository.deleteCategory(category)
                 }
-                categoryToDeleteState.value = null
+                dialogState.update { it.copy(categoryToDelete = null) }
             } catch (e: Exception) {
-                errorState.value = e.message ?: "Failed to delete category"
+                dialogState.update { it.copy(error = e.message ?: "Failed to delete category") }
             }
         }
     }
 
     fun clearError() {
-        errorState.value = null
+        dialogState.update { it.copy(error = null) }
     }
 }

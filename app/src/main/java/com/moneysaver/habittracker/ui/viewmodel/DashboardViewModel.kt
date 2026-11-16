@@ -16,6 +16,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import java.time.DayOfWeek
@@ -37,7 +38,7 @@ data class DashboardUiState(
     val habitCompletionRatio: Float = 0f,
     val recentTransactions: List<Transaction> = emptyList(),
     val activeSavingsGoals: List<SavingsGoal> = emptyList(),
-    val currencySymbol: String = "$",
+    val currencySymbol: String = "Rp",
     val isLoading: Boolean = false
 )
 
@@ -109,7 +110,8 @@ class DashboardViewModel(
             currencySymbol = userPrefs.currencySymbol,
             isLoading = false
         )
-    }.stateIn(
+    }.flowOn(kotlinx.coroutines.Dispatchers.Default)
+    .stateIn(
         scope = viewModelScope,
         started = SharingStarted.WhileSubscribed(5000),
         initialValue = DashboardUiState(isLoading = true)
@@ -119,6 +121,18 @@ class DashboardViewModel(
         selectedPeriodFilter.value = filter
         viewModelScope.launch {
             userPreferencesRepository.setPeriodFilter(filter)
+        }
+    }
+
+    fun setCurrencySymbol(symbol: String) {
+        viewModelScope.launch {
+            userPreferencesRepository.setCurrencySymbol(symbol)
+        }
+    }
+
+    fun setLanguage(language: String) {
+        viewModelScope.launch {
+            userPreferencesRepository.setLanguage(language)
         }
     }
 

@@ -1,0 +1,107 @@
+<resources>
+    <string name="app_name">Money Saver &amp; Habit Tracker</string>
+
+    <!-- Navigation -->
+    <string name="nav_dashboard">Dasbor</string>
+    <string name="nav_transactions">Transaksi</string>
+    <string name="nav_goals">Target</string>
+    <string name="nav_habits">Kebiasaan</string>
+
+    <!-- Dashboard -->
+    <string name="dashboard_title">Dasbor</string>
+    <string name="dashboard_available_balance">Saldo Tersedia Bersih</string>
+    <string name="dashboard_liquid_funds">Dana likuid setelah dikurangi alokasi tabungan aktif</string>
+    <string name="dashboard_cash_flow">Arus Kas</string>
+    <string name="dashboard_income">Pemasukan</string>
+    <string name="dashboard_expense">Pengeluaran</string>
+    <string name="dashboard_net_flow">Arus Bersih</string>
+    <string name="dashboard_todays_habits">Kebiasaan Hari Ini</string>
+    <string name="dashboard_no_habits">Tidak ada kebiasaan terjadwal hari ini</string>
+    <string name="dashboard_habits_completed">%1$d dari %2$d selesai (%3$d%%)</string>
+    <string name="dashboard_quick_actions">Aksi Cepat</string>
+    <string name="dashboard_add_tx">Tambah Transaksi</string>
+    <string name="dashboard_add_goal">Tambah Target</string>
+    <string name="dashboard_add_habit">Tambah Kebiasaan</string>
+    <string name="dashboard_recent_transactions">Transaksi Terbaru</string>
+    <string name="dashboard_no_recent_transactions">Belum ada transaksi yang dicatat.</string>
+    <string name="dashboard_active_savings_goals">Target Tabungan Aktif</string>
+    <string name="dashboard_no_active_goals">Belum ada target tabungan aktif. Mulai menabung untuk impianmu!</string>
+    <string name="dashboard_view_all">Lihat Semua</string>
+
+    <!-- Settings -->
+    <string name="settings_title">Pengaturan Aplikasi</string>
+    <string name="settings_language">Bahasa / Language</string>
+    <string name="settings_currency">Mata Uang / Currency</string>
+    <string name="settings_rupiah">Rupiah Indonesia (Rp)</string>
+    <string name="settings_usd">Dolar Amerika ($)</string>
+    <string name="settings_lang_id">Bahasa Indonesia</string>
+    <string name="settings_lang_en">English</string>
+    <string name="settings_close">Tutup</string>
+
+    <!-- Transactions -->
+    <string name="transactions_title">Transaksi</string>
+    <string name="filter_all">Semua</string>
+    <string name="filter_income">Pemasukan</string>
+    <string name="filter_expense">Pengeluaran</string>
+    <string name="filter_transfers">Transfer</string>
+    <string name="tx_empty_title">Tidak Ada Transaksi</string>
+    <string name="tx_empty_desc">Anda belum mencatat transaksi apa pun. Ketuk tombol di bawah untuk menambah transaksi pertama Anda.</string>
+    <string name="tx_empty_filtered">Tidak ada transaksi yang cocok dengan filter yang dipilih.</string>
+    <string name="tx_add_title">Catat Transaksi Baru</string>
+    <string name="tx_edit_title">Ubah Transaksi</string>
+    <string name="tx_amount">Jumlah</string>
+    <string name="tx_type">Jenis</string>
+    <string name="tx_category">Kategori</string>
+    <string name="tx_note">Catatan (opsional)</string>
+    <string name="tx_available">Tersedia: %1$s</string>
+    <string name="tx_delete_title">Hapus Transaksi</string>
+    <string name="tx_delete_confirm">Apakah Anda yakin ingin menghapus transaksi ini?</string>
+    <string name="manage_categories">Kelola Kategori</string>
+    <string name="create_category">Buat Kategori Baru</string>
+    <string name="category_name">Nama Kategori</string>
+
+    <!-- Savings Goals -->
+    <string name="goals_title">Target Tabungan</string>
+    <string name="goals_empty_title">Belum Ada Target Tabungan</string>
+    <string name="goals_empty_desc">Buat target tabungan pertama Anda untuk mulai menyisihkan uang demi masa depan.</string>
+    <string name="goal_add_title">Target Tabungan Baru</string>
+    <string name="goal_edit_title">Ubah Target Tabungan</string>
+    <string name="goal_title_label">Nama Target</string>
+    <string name="goal_target_amount">Jumlah Target</string>
+    <string name="goal_target_date">Tanggal Target (opsional)</string>
+    <string name="goal_allocate">Alokasikan</string>
+    <string name="goal_withdraw">Tarik Dana</string>
+    <string name="goal_saved">Terkumpul: %1$s / %2$s</string>
+    <string name="goal_delete_title">Hapus Target Tabungan</string>
+    <string name="goal_delete_refund">Kembalikan semua dana ke Saldo Tersedia</string>
+    <string name="goal_delete_realize">Realisasikan dana terkumpul sebagai Pengeluaran</string>
+
+    <!-- Habits -->
+    <string name="habits_title">Daftar Kebiasaan</string>
+    <string name="habits_no_due_today">Tidak Ada Kebiasaan Hari Ini</string>
+    <string name="habits_no_due_today_desc">Anda tidak memiliki kebiasaan terjadwal untuk hari ini. Tambah kebiasaan baru untuk mulai membangun rentetan Anda!</string>
+    <string name="habits_future_readonly">Tanggal Mendatang — Penyelesaian kebiasaan hanya dapat dibaca</string>
+    <string name="habits_create_title">Buat Kebiasaan Baru</string>
+    <string name="habits_name">Nama Kebiasaan</string>
+    <string name="habits_description">Deskripsi (opsional)</string>
+    <string name="habits_frequency">Frekuensi</string>
+    <string name="habits_daily">Harian</string>
+    <string name="habits_custom_days">Hari Tertentu</string>
+    <string name="habits_scheduled_days">Hari Terjadwal</string>
+    <string name="habits_set_reminder">Pasang pengingat harian (08:00)</string>
+    <string name="habits_streak">Rentetan</string>
+    <string name="habits_today">Hari Ini</string>
+    <string name="habits_yesterday">Kemarin</string>
+    <string name="habits_tomorrow">Besok</string>
+    <string name="habits_progress_for">Kemajuan untuk %1$s</string>
+    <string name="habits_detail_title">Rincian Kebiasaan</string>
+
+    <!-- Buttons -->
+    <string name="btn_create">Buat</string>
+    <string name="btn_save">Simpan</string>
+    <string name="btn_cancel">Batal</string>
+    <string name="btn_delete">Hapus</string>
+    <string name="btn_allocate">Alokasikan</string>
+    <string name="btn_withdraw">Tarik Dana</string>
+    <string name="btn_back">Kembali</string>
+</resources>

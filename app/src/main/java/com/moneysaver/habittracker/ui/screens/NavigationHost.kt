@@ -16,6 +16,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.res.stringResource
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.NavHostController
 import androidx.navigation.NavType
@@ -24,17 +25,18 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
+import com.moneysaver.habittracker.R
 import com.moneysaver.habittracker.ui.viewmodel.DashboardViewModel
 import com.moneysaver.habittracker.ui.viewmodel.HabitViewModel
 import com.moneysaver.habittracker.ui.viewmodel.SavingsGoalViewModel
 import com.moneysaver.habittracker.ui.viewmodel.TransactionViewModel
 
-sealed class Screen(val route: String, val title: String, val icon: ImageVector) {
-    object Dashboard : Screen("dashboard", "Dashboard", Icons.Default.Dashboard)
-    object Transactions : Screen("transactions", "Transactions", Icons.Default.ReceiptLong)
-    object SavingsGoals : Screen("savings_goals", "Goals", Icons.Default.Savings)
-    object Habits : Screen("habits", "Habits", Icons.Default.CheckCircle)
-    object HabitDetail : Screen("habit_detail/{habitId}", "Habit Detail", Icons.Default.CheckCircle) {
+sealed class Screen(val route: String, val titleRes: Int, val icon: ImageVector) {
+    object Dashboard : Screen("dashboard", R.string.nav_dashboard, Icons.Default.Dashboard)
+    object Transactions : Screen("transactions", R.string.nav_transactions, Icons.Default.ReceiptLong)
+    object SavingsGoals : Screen("savings_goals", R.string.nav_goals, Icons.Default.Savings)
+    object Habits : Screen("habits", R.string.nav_habits, Icons.Default.CheckCircle)
+    object HabitDetail : Screen("habit_detail/{habitId}", R.string.habits_detail_title, Icons.Default.CheckCircle) {
         fun createRoute(habitId: String) = "habit_detail/$habitId"
     }
 }
@@ -80,8 +82,8 @@ fun NavigationHost(
                                     }
                                 }
                             },
-                            icon = { Icon(imageVector = screen.icon, contentDescription = screen.title) },
-                            label = { Text(screen.title) }
+                            icon = { Icon(imageVector = screen.icon, contentDescription = stringResource(screen.titleRes)) },
+                            label = { Text(stringResource(screen.titleRes)) }
                         )
                     }
                 }

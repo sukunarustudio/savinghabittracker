@@ -1,3 +1,107 @@
 <resources>
     <string name="app_name">Money Saver &amp; Habit Tracker</string>
+
+    <!-- Navigation -->
+    <string name="nav_dashboard">Dashboard</string>
+    <string name="nav_transactions">Transactions</string>
+    <string name="nav_goals">Goals</string>
+    <string name="nav_habits">Habits</string>
+
+    <!-- Dashboard -->
+    <string name="dashboard_title">Dashboard</string>
+    <string name="dashboard_available_balance">Net Available Balance</string>
+    <string name="dashboard_liquid_funds">Liquid funds after reserved active savings</string>
+    <string name="dashboard_cash_flow">Cash Flow</string>
+    <string name="dashboard_income">Income</string>
+    <string name="dashboard_expense">Expense</string>
+    <string name="dashboard_net_flow">Net Flow</string>
+    <string name="dashboard_todays_habits">Today\'s Habits</string>
+    <string name="dashboard_no_habits">No habits scheduled for today</string>
+    <string name="dashboard_habits_completed">%1$d of %2$d completed (%3$d%%)</string>
+    <string name="dashboard_quick_actions">Quick Actions</string>
+    <string name="dashboard_add_tx">Add Transaction</string>
+    <string name="dashboard_add_goal">Add Goal</string>
+    <string name="dashboard_add_habit">Add Habit</string>
+    <string name="dashboard_recent_transactions">Recent Transactions</string>
+    <string name="dashboard_no_recent_transactions">No recent transactions recorded.</string>
+    <string name="dashboard_active_savings_goals">Active Savings Goals</string>
+    <string name="dashboard_no_active_goals">No active savings goals. Start saving towards a goal!</string>
+    <string name="dashboard_view_all">View All</string>
+
+    <!-- Settings -->
+    <string name="settings_title">Settings</string>
+    <string name="settings_language">Language / Bahasa</string>
+    <string name="settings_currency">Currency / Mata Uang</string>
+    <string name="settings_rupiah">Indonesian Rupiah (Rp)</string>
+    <string name="settings_usd">US Dollar ($)</string>
+    <string name="settings_lang_id">Bahasa Indonesia</string>
+    <string name="settings_lang_en">English</string>
+    <string name="settings_close">Close</string>
+
+    <!-- Transactions -->
+    <string name="transactions_title">Transactions</string>
+    <string name="filter_all">All</string>
+    <string name="filter_income">Income</string>
+    <string name="filter_expense">Expense</string>
+    <string name="filter_transfers">Transfers</string>
+    <string name="tx_empty_title">No Transactions Found</string>
+    <string name="tx_empty_desc">You haven\'t recorded any transactions yet. Tap the button below to add your first transaction.</string>
+    <string name="tx_empty_filtered">No transactions matching the selected filter.</string>
+    <string name="tx_add_title">Record New Transaction</string>
+    <string name="tx_edit_title">Edit Transaction</string>
+    <string name="tx_amount">Amount</string>
+    <string name="tx_type">Type</string>
+    <string name="tx_category">Category</string>
+    <string name="tx_note">Note (optional)</string>
+    <string name="tx_available">Available: %1$s</string>
+    <string name="tx_delete_title">Delete Transaction</string>
+    <string name="tx_delete_confirm">Are you sure you want to delete this transaction?</string>
+    <string name="manage_categories">Manage Categories</string>
+    <string name="create_category">Create Category</string>
+    <string name="category_name">Category Name</string>
+
+    <!-- Savings Goals -->
+    <string name="goals_title">Savings Goals</string>
+    <string name="goals_empty_title">No Savings Goals</string>
+    <string name="goals_empty_desc">Create your first savings goal to start setting aside money for your future.</string>
+    <string name="goal_add_title">New Savings Goal</string>
+    <string name="goal_edit_title">Edit Savings Goal</string>
+    <string name="goal_title_label">Goal Title</string>
+    <string name="goal_target_amount">Target Amount</string>
+    <string name="goal_target_date">Target Date (optional)</string>
+    <string name="goal_allocate">Allocate</string>
+    <string name="goal_withdraw">Withdraw</string>
+    <string name="goal_saved">Saved: %1$s / %2$s</string>
+    <string name="goal_delete_title">Delete Savings Goal</string>
+    <string name="goal_delete_refund">Refund all funds back to Net Available Balance</string>
+    <string name="goal_delete_realize">Realize saved funds as an Expense</string>
+
+    <!-- Habits -->
+    <string name="habits_title">Habit Checklist</string>
+    <string name="habits_no_due_today">No Habits Due Today</string>
+    <string name="habits_no_due_today_desc">You don\'t have any habits scheduled for today. Add a new habit to start building your streak!</string>
+    <string name="habits_future_readonly">Future Date — Habit completions are read-only</string>
+    <string name="habits_create_title">Create New Habit</string>
+    <string name="habits_name">Habit Name</string>
+    <string name="habits_description">Description (optional)</string>
+    <string name="habits_frequency">Frequency</string>
+    <string name="habits_daily">Daily</string>
+    <string name="habits_custom_days">Custom Days</string>
+    <string name="habits_scheduled_days">Scheduled Days</string>
+    <string name="habits_set_reminder">Set daily reminder (08:00 AM)</string>
+    <string name="habits_streak">Streak</string>
+    <string name="habits_today">Today</string>
+    <string name="habits_yesterday">Yesterday</string>
+    <string name="habits_tomorrow">Tomorrow</string>
+    <string name="habits_progress_for">Progress for %1$s</string>
+    <string name="habits_detail_title">Habit Detail</string>
+
+    <!-- Buttons -->
+    <string name="btn_create">Create</string>
+    <string name="btn_save">Save</string>
+    <string name="btn_cancel">Cancel</string>
+    <string name="btn_delete">Delete</string>
+    <string name="btn_allocate">Allocate</string>
+    <string name="btn_withdraw">Withdraw</string>
+    <string name="btn_back">Back</string>
 </resources>

@@ -53,9 +53,11 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
+import com.moneysaver.habittracker.R
 import com.moneysaver.habittracker.domain.model.GoalStatus
 import com.moneysaver.habittracker.domain.model.SavingsGoal
 import com.moneysaver.habittracker.ui.components.EmptyStateView
@@ -78,7 +80,7 @@ fun SavingsGoalsScreen(
             TopAppBar(
                 title = {
                     Text(
-                        text = "Savings Goals",
+                        text = stringResource(R.string.goals_title),
                         style = MaterialTheme.typography.titleLarge,
                         fontWeight = FontWeight.Bold
                     )
@@ -94,7 +96,7 @@ fun SavingsGoalsScreen(
                 containerColor = MaterialTheme.colorScheme.primaryContainer,
                 contentColor = MaterialTheme.colorScheme.onPrimaryContainer
             ) {
-                Icon(imageVector = Icons.Default.Add, contentDescription = "Add Goal")
+                Icon(imageVector = Icons.Default.Add, contentDescription = stringResource(R.string.goal_add_title))
             }
         },
         modifier = modifier

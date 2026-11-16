@@ -58,9 +58,11 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
+import com.moneysaver.habittracker.R
 import com.moneysaver.habittracker.domain.model.habit.FrequencyType
 import com.moneysaver.habittracker.domain.model.habit.Habit
 import com.moneysaver.habittracker.ui.components.EmptyStateView
@@ -87,7 +89,7 @@ fun HabitChecklistScreen(
             TopAppBar(
                 title = {
                     Text(
-                        text = "Habit Checklist",
+                        text = stringResource(R.string.habits_title),
                         style = MaterialTheme.typography.titleLarge,
                         fontWeight = FontWeight.Bold
                     )
@@ -103,7 +105,7 @@ fun HabitChecklistScreen(
                 containerColor = MaterialTheme.colorScheme.primaryContainer,
                 contentColor = MaterialTheme.colorScheme.onPrimaryContainer
             ) {
-                Icon(imageVector = Icons.Default.Add, contentDescription = "Add Habit")
+                Icon(imageVector = Icons.Default.Add, contentDescription = stringResource(R.string.dashboard_add_habit))
             }
         },
         modifier = modifier
@@ -142,7 +144,7 @@ fun HabitChecklistScreen(
                         )
                         Spacer(modifier = Modifier.width(8.dp))
                         Text(
-                            text = "Future Date — Habit completions are read-only",
+                            text = stringResource(R.string.habits_future_readonly),
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onTertiaryContainer,
                             fontWeight = FontWeight.Medium
@@ -172,7 +174,7 @@ fun HabitChecklistScreen(
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Text(
-                            text = "Progress for ${DateFormatter.formatShortDate(state.selectedDate.atStartOfDay(java.time.ZoneId.systemDefault()).toInstant().toEpochMilli())}",
+                            text = stringResource(R.string.habits_progress_for, DateFormatter.formatShortDate(state.selectedDate.atStartOfDay(java.time.ZoneId.systemDefault()).toInstant().toEpochMilli())),
                             style = MaterialTheme.typography.titleSmall,
                             fontWeight = FontWeight.SemiBold
                         )
@@ -186,7 +188,7 @@ fun HabitChecklistScreen(
                             )
                         } else {
                             Text(
-                                text = "0 habits",
+                                text = "0",
                                 style = MaterialTheme.typography.bodySmall,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
@@ -212,13 +214,13 @@ fun HabitChecklistScreen(
             if (state.checklistItems.isEmpty()) {
                 EmptyStateView(
                     icon = Icons.Default.CheckCircle,
-                    title = "No Habits Due Today",
+                    title = stringResource(R.string.habits_no_due_today),
                     description = if (state.selectedDate == state.today) {
-                        "You don't have any habits scheduled for today. Add a new habit to start building your streak!"
+                        stringResource(R.string.habits_no_due_today_desc)
                     } else {
                         "No habits scheduled for ${DateFormatter.formatLocalDate(state.selectedDate)}."
                     },
-                    actionButtonText = "Create Habit",
+                    actionButtonText = stringResource(R.string.btn_create),
                     onActionClick = { viewModel.openAddHabit() },
                     modifier = Modifier.weight(1f)
                 )
@@ -284,9 +286,9 @@ fun DateSelectorBar(
             modifier = Modifier.clickable { onToday() }
         ) {
             val dateLabel = when (selectedDate) {
-                today -> "Today"
-                today.minusDays(1) -> "Yesterday"
-                today.plusDays(1) -> "Tomorrow"
+                today -> stringResource(R.string.habits_today)
+                today.minusDays(1) -> stringResource(R.string.habits_yesterday)
+                today.plusDays(1) -> stringResource(R.string.habits_tomorrow)
                 else -> DateFormatter.formatDayOfWeek(selectedDate)
             }
             Text(
@@ -437,7 +439,7 @@ fun AddHabitDialog(
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("Create New Habit") },
+        title = { Text(stringResource(R.string.habits_create_title)) },
         text = {
             Column(
                 modifier = Modifier.fillMaxWidth(),
@@ -446,7 +448,7 @@ fun AddHabitDialog(
                 OutlinedTextField(
                     value = name,
                     onValueChange = { name = it },
-                    label = { Text("Habit Name") },
+                    label = { Text(stringResource(R.string.habits_name)) },
                     singleLine = true,
                     modifier = Modifier.fillMaxWidth()
                 )
@@ -454,31 +456,31 @@ fun AddHabitDialog(
                 OutlinedTextField(
                     value = description,
                     onValueChange = { description = it },
-                    label = { Text("Description (optional)") },
+                    label = { Text(stringResource(R.string.habits_description)) },
                     singleLine = true,
                     modifier = Modifier.fillMaxWidth()
                 )
 
-                Text(text = "Frequency", style = MaterialTheme.typography.labelMedium)
+                Text(text = stringResource(R.string.habits_frequency), style = MaterialTheme.typography.labelMedium)
                 SingleChoiceSegmentedButtonRow(modifier = Modifier.fillMaxWidth()) {
                     SegmentedButton(
                         selected = frequencyType == FrequencyType.DAILY,
                         onClick = { frequencyType = FrequencyType.DAILY },
                         shape = SegmentedButtonDefaults.itemShape(index = 0, count = 2)
                     ) {
-                        Text("Daily")
+                        Text(stringResource(R.string.habits_daily))
                     }
                     SegmentedButton(
                         selected = frequencyType == FrequencyType.CUSTOM_DAYS,
                         onClick = { frequencyType = FrequencyType.CUSTOM_DAYS },
                         shape = SegmentedButtonDefaults.itemShape(index = 1, count = 2)
                     ) {
-                        Text("Custom Days")
+                        Text(stringResource(R.string.habits_custom_days))
                     }
                 }
 
                 if (frequencyType == FrequencyType.CUSTOM_DAYS) {
-                    Text(text = "Scheduled Days", style = MaterialTheme.typography.labelSmall)
+                    Text(text = stringResource(R.string.habits_scheduled_days), style = MaterialTheme.typography.labelSmall)
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.SpaceBetween
@@ -518,7 +520,7 @@ fun AddHabitDialog(
                         onCheckedChange = { hasReminder = it }
                     )
                     Spacer(modifier = Modifier.width(4.dp))
-                    Text(text = "Set daily reminder (08:00 AM)", style = MaterialTheme.typography.bodyMedium)
+                    Text(text = stringResource(R.string.habits_set_reminder), style = MaterialTheme.typography.bodyMedium)
                 }
             }
         },
@@ -531,12 +533,12 @@ fun AddHabitDialog(
                     }
                 }
             ) {
-                Text("Create")
+                Text(stringResource(R.string.btn_create))
             }
         },
         dismissButton = {
             TextButton(onClick = onDismiss) {
-                Text("Cancel")
+                Text(stringResource(R.string.btn_cancel))
             }
         }
     )

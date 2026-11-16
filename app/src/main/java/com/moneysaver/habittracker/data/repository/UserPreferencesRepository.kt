@@ -23,9 +23,10 @@ import java.io.IOException
 val Context.userDataStore: DataStore<Preferences> by preferencesDataStore(name = "user_preferences")
 
 data class UserPreferences(
-    val currencySymbol: String = "$",
+    val currencySymbol: String = "Rp",
     val themeMode: ThemeMode = ThemeMode.SYSTEM,
-    val periodFilter: PeriodFilter = PeriodFilter.MONTHLY
+    val periodFilter: PeriodFilter = PeriodFilter.MONTHLY,
+    val language: String = "in"
 )
 
 interface UserPreferencesRepository {
@@ -37,12 +38,15 @@ interface UserPreferencesRepository {
     suspend fun updateThemeMode(mode: ThemeMode)
     suspend fun setPeriodFilter(period: PeriodFilter)
     suspend fun updatePeriodFilter(period: PeriodFilter)
+    suspend fun setLanguage(language: String)
+    suspend fun updateLanguage(language: String)
     suspend fun clear()
 
     companion object {
         val CURRENCY_SYMBOL = stringPreferencesKey("currency_symbol")
         val THEME_MODE = stringPreferencesKey("theme_mode")
         val PERIOD_FILTER = stringPreferencesKey("period_filter")
+        val LANGUAGE = stringPreferencesKey("language")
 
         operator fun invoke(
             context: Context,
@@ -78,18 +82,20 @@ class DataStoreUserPreferencesRepository(
             }
         }
         .map { preferences ->
-            val currencySymbol = preferences[UserPreferencesRepository.CURRENCY_SYMBOL] ?: "$"
+            val currencySymbol = preferences[UserPreferencesRepository.CURRENCY_SYMBOL] ?: "Rp"
             val themeMode = preferences[UserPreferencesRepository.THEME_MODE]?.let {
                 runCatching { ThemeMode.valueOf(it) }.getOrDefault(ThemeMode.SYSTEM)
             } ?: ThemeMode.SYSTEM
             val periodFilter = preferences[UserPreferencesRepository.PERIOD_FILTER]?.let {
                 runCatching { PeriodFilter.valueOf(it) }.getOrDefault(PeriodFilter.MONTHLY)
             } ?: PeriodFilter.MONTHLY
+            val language = preferences[UserPreferencesRepository.LANGUAGE] ?: "in"
 
             UserPreferences(
                 currencySymbol = currencySymbol,
                 themeMode = themeMode,
-                periodFilter = periodFilter
+                periodFilter = periodFilter,
+                language = language
             )
         }
 
@@ -123,6 +129,14 @@ class DataStoreUserPreferencesRepository(
     }
 
     override suspend fun updatePeriodFilter(period: PeriodFilter) = setPeriodFilter(period)
+
+    override suspend fun setLanguage(language: String) {
+        dataStore.edit { preferences ->
+            preferences[UserPreferencesRepository.LANGUAGE] = language
+        }
+    }
+
+    override suspend fun updateLanguage(language: String) = setLanguage(language)
 
     override suspend fun clear() {
         dataStore.edit { preferences ->

@@ -59,9 +59,11 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
+import com.moneysaver.habittracker.R
 import com.moneysaver.habittracker.domain.model.Category
 import com.moneysaver.habittracker.domain.model.CategoryType
 import com.moneysaver.habittracker.domain.model.Transaction
@@ -87,14 +89,14 @@ fun TransactionsScreen(
             TopAppBar(
                 title = {
                     Text(
-                        text = "Transactions",
+                        text = stringResource(R.string.transactions_title),
                         style = MaterialTheme.typography.titleLarge,
                         fontWeight = FontWeight.Bold
                     )
                 },
                 actions = {
                     IconButton(onClick = { viewModel.openCategoryManagement() }) {
-                        Icon(imageVector = Icons.Default.Category, contentDescription = "Manage Categories")
+                        Icon(imageVector = Icons.Default.Category, contentDescription = stringResource(R.string.manage_categories))
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
@@ -108,7 +110,7 @@ fun TransactionsScreen(
                 containerColor = MaterialTheme.colorScheme.primaryContainer,
                 contentColor = MaterialTheme.colorScheme.onPrimaryContainer
             ) {
-                Icon(imageVector = Icons.Default.Add, contentDescription = "Add Transaction")
+                Icon(imageVector = Icons.Default.Add, contentDescription = stringResource(R.string.tx_add_title))
             }
         },
         modifier = modifier
@@ -129,28 +131,28 @@ fun TransactionsScreen(
                     FilterChip(
                         selected = state.filterType == null,
                         onClick = { viewModel.setFilter(null) },
-                        label = { Text("All") }
+                        label = { Text(stringResource(R.string.filter_all)) }
                     )
                 }
                 item {
                     FilterChip(
                         selected = state.filterType == TransactionType.INCOME,
                         onClick = { viewModel.setFilter(TransactionType.INCOME) },
-                        label = { Text("Income") }
+                        label = { Text(stringResource(R.string.filter_income)) }
                     )
                 }
                 item {
                     FilterChip(
                         selected = state.filterType == TransactionType.EXPENSE,
                         onClick = { viewModel.setFilter(TransactionType.EXPENSE) },
-                        label = { Text("Expense") }
+                        label = { Text(stringResource(R.string.filter_expense)) }
                     )
                 }
                 item {
                     FilterChip(
                         selected = state.filterType == TransactionType.SAVINGS_DEPOSIT || state.filterType == TransactionType.SAVINGS_WITHDRAWAL,
                         onClick = { viewModel.setFilter(TransactionType.SAVINGS_DEPOSIT) },
-                        label = { Text("Transfers") }
+                        label = { Text(stringResource(R.string.filter_transfers)) }
                     )
                 }
             }
@@ -159,13 +161,13 @@ fun TransactionsScreen(
             if (state.transactions.isEmpty()) {
                 EmptyStateView(
                     icon = Icons.Default.ReceiptLong,
-                    title = "No Transactions Found",
+                    title = stringResource(R.string.tx_empty_title),
                     description = if (state.filterType == null) {
-                        "You haven't recorded any transactions yet. Tap the button below to add your first transaction."
+                        stringResource(R.string.tx_empty_desc)
                     } else {
-                        "No transactions matching the selected filter."
+                        stringResource(R.string.tx_empty_filtered)
                     },
-                    actionButtonText = if (state.filterType == null) "Add Transaction" else null,
+                    actionButtonText = if (state.filterType == null) stringResource(R.string.dashboard_add_tx) else null,
                     onActionClick = { viewModel.openAddTransaction() },
                     modifier = Modifier.weight(1f)
                 )
